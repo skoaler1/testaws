@@ -8,21 +8,24 @@
   <h1>🌤️ 홍천 현재 기온: <span id="temp">로딩 중...</span> ℃</h1>
 
   <script>
-    async function fetchAWS() {
-      const url = "https://apihub.kma.go.kr/api/typ01/cgi-bin/url/nph-aws2_min?stn=212&disp=0&help=0&authKey=5aFO0TIuTfehTtEyLq33zA";
-      const res = await fetch(url);
-      const text = await res.text();
+   async function fetchAWS() {
+  const url = `https://apihub.kma.go.kr/api/typ01/cgi-bin/url/nph-aws2_min?stn=212&disp=0&help=0&authKey=5aFO0TIuTfehTtEyLq33zA&rand=${Date.now()}`;
+  const res = await fetch(url);
+  const text = await res.text();
 
-      const lines = text.trim().split("\n");
-      const dataLine = lines.find(line => line.startsWith("212"));
-      if (dataLine) {
-        const parts = dataLine.trim().split(/\s+/);
-        const temp = parts[3]; // TA (기온)
-        document.getElementById("temp").textContent = temp;
-      } else {
-        document.getElementById("temp").textContent = "데이터 없음";
-      }
-    }
+  console.log("받은 원시 데이터:\n", text);
+
+  const lines = text.trim().split("\n");
+  const dataLine = lines.find(line => line.startsWith("212"));
+  if (dataLine) {
+    const parts = dataLine.trim().split(/\s+/);
+    const temp = parts[3]; // TA
+    document.getElementById("temp").textContent = temp;
+  } else {
+    document.getElementById("temp").textContent = "데이터 없음";
+  }
+}
+
 
     fetchAWS();
     setInterval(fetchAWS, 60000); // 1분마다 갱신
