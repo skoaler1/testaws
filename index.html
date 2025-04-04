@@ -1,34 +1,48 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>홍천 실시간 기온</title>
+  <title>기온 및 습도 출력</title>
 </head>
 <body>
-  <h1>🌤️ 홍천 현재 기온: <span id="temp">로딩 중...</span> ℃</h1>
+  <h1>서울 관측소 기상 정보</h1>
+  <p><strong>기온 (TA):</strong> <span id="temp">로딩 중...</span> °C</p>
+  <p><strong>습도 (HM):</strong> <span id="humidity">로딩 중...</span> %</p>
 
   <script>
-   async function fetchAWS() {
-  const url = `https://apihub.kma.go.kr/api/typ01/cgi-bin/url/nph-aws2_min?stn=212&disp=0&help=0&authKey=5aFO0TIuTfehTtEyLq33zA&rand=${Date.now()}`;
-  const res = await fetch(url);
-  const text = await res.text();
+    async function fetchWeather() {
+      try {
+        const response = await fetch('https://apihub.kma.go.kr/api/typ01/cgi-bin/url/nph-aws2_min?stn=212&disp=0&authKey=5aFO0TIuTfehTtEyLq33zA');
+        const text = await response.text();
 
-  console.log("받은 원시 데이터:\n", text);
+        // 줄 단위로 분리
+        const lines = text.split('\n');
 
-  const lines = text.trim().split("\n");
-  const dataLine = lines.find(line => line.startsWith("212"));
-  if (dataLine) {
-    const parts = dataLine.trim().split(/\s+/);
-    const temp = parts[3]; // TA
-    document.getElementById("temp").textContent = temp;
-  } else {
-    document.getElementById("temp").textContent = "데이터 없음";
-  }
-}
+        // 데이터 줄 찾기 (맨 마지막 줄이 최신일 수 있음)
+        const dataLine = lines.find(line => line.includes('TA') && line.includes('HM'));
 
+        if (dataLine) {
+          const parts = dataLine.trim().split(/\s+/); // 공백 기준으로 나누기
+          const taIndex = parts.findIndex(p => p === 'TA');
+          const hmIndex = parts.findIndex(p => p === 'HM');
 
-    fetchAWS();
-    setInterval(fetchAWS, 60000); // 1분마다 갱신
+          const temp = parts[taIndex + 1];
+          const humidity = parts[hmIndex + 1];
+
+          document.getElementById('temp').textContent = temp;
+          document.getElementById('humidity').textContent = humidity;
+        } else {
+          document.getElementById('temp').textContent = '데이터 없음';
+          document.getElementById('humidity').textContent = '데이터 없음';
+        }
+      } catch (error) {
+        document.getElementById('temp').textContent = '오류';
+        document.getElementById('humidity').textContent = '오류';
+        console.error('에러 발생:', error);
+      }
+    }
+
+    fetchWeather();
   </script>
 </body>
 </html>
